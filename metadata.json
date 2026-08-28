@@ -1,0 +1,6 @@
+{
+  "name": "FluentStep - AI Course Generator, Teacher & Assessment Platform",
+  "description": "Comprehensive English learning platform featuring custom AI course generation, live AI teacher Sarah with voice & interactive teaching modes, full IELTS/TOEFL/WAEC/JAMB exam prep with timed mock tests, AI speaking & writing diagnostics, verified certificates, and 30/60/90 day structured programs.",
+  "requestFramePermissions": ["microphone"],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

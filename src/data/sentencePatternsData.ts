@@ -1,0 +1,448 @@
+import { UserLevel } from '../types';
+
+export interface SentencePatternItem {
+  id: string;
+  pattern: string; // e.g. "I want to + VERB"
+  level: UserLevel;
+  category: 'Desires & Intentions' | 'Obligations & Needs' | 'Habits & Past' | 'Opinions & Beliefs' | 'Polite Requests' | 'Questions & Clarifications' | 'Preferences';
+  explanation: string;
+  formula: string;
+  examples: string[];
+  verbsOrComplements: string[]; // Options to build sentences
+  starterPrompt: string; // "I want to ____"
+  tips: string;
+  commonMistake?: {
+    incorrect: string;
+    correct: string;
+    reason: string;
+  };
+}
+
+export const SENTENCE_PATTERNS: SentencePatternItem[] = [
+  // A1 Level Patterns
+  {
+    id: 'i-want-to',
+    pattern: 'I want to + VERB',
+    level: 'A1',
+    category: 'Desires & Intentions',
+    explanation: 'Used to express a direct personal desire or goal in the present.',
+    formula: 'Subject (I) + want to + Base Verb (infinitive without to) + Object/Complement',
+    examples: [
+      'I want to learn English.',
+      'I want to buy a phone.',
+      'I want to visit Lagos.',
+      'I want to become a doctor.',
+      'I want to drink some water.',
+    ],
+    verbsOrComplements: ['learn English', 'buy a phone', 'visit Lagos', 'become a doctor', 'study tonight', 'improve my speaking'],
+    starterPrompt: 'I want to',
+    tips: 'Always use the base form of the verb after "to" (e.g., "I want to go", not "I want to went").',
+    commonMistake: {
+      incorrect: 'I want learn English.',
+      correct: 'I want to learn English.',
+      reason: 'The verb "want" requires the full infinitive marker "to" before the next verb.',
+    },
+  },
+  {
+    id: 'i-need-to',
+    pattern: 'I need to + VERB',
+    level: 'A1',
+    category: 'Obligations & Needs',
+    explanation: 'Used to express necessity or an essential task that must be done.',
+    formula: 'Subject (I) + need to + Base Verb + Object/Time',
+    examples: [
+      'I need to wake up early tomorrow.',
+      'I need to call my parents.',
+      'I need to finish this assignment.',
+      'I need to buy some groceries.',
+    ],
+    verbsOrComplements: ['wake up early', 'call my parents', 'finish this assignment', 'buy groceries', 'renew my passport', 'take a short break'],
+    starterPrompt: 'I need to',
+    tips: '"Need to" is stronger than "want to"—it signifies necessity rather than just desire.',
+    commonMistake: {
+      incorrect: 'I am needing to go now.',
+      correct: 'I need to go now.',
+      reason: '"Need" is a stative verb and is rarely used in the continuous (-ing) tense.',
+    },
+  },
+  {
+    id: 'i-have-to',
+    pattern: 'I have to + VERB',
+    level: 'A1',
+    category: 'Obligations & Needs',
+    explanation: 'Used for external obligations, rules, or unavoidable duties.',
+    formula: 'Subject (I) + have to + Base Verb + Complement',
+    examples: [
+      'I have to go to work now.',
+      'I have to study for my exam.',
+      'I have to pay the electricity bill.',
+      'I have to catch the 8:00 AM bus.',
+    ],
+    verbsOrComplements: ['go to work now', 'study for my exam', 'pay the electricity bill', 'clean my room', 'submit the report today'],
+    starterPrompt: 'I have to',
+    tips: 'In spoken casual English, "have to" often sounds like "hafta".',
+    commonMistake: {
+      incorrect: 'I have to going to the office.',
+      correct: 'I have to go to the office.',
+      reason: 'Always use base infinitive ("go"), never the gerund ("going").',
+    },
+  },
+  {
+    id: 'i-dont-want-to',
+    pattern: "I don't want to + VERB",
+    level: 'A1',
+    category: 'Desires & Intentions',
+    explanation: 'Used to state negative desires or things you wish to avoid.',
+    formula: "Subject (I) + don't want to + Base Verb + Complement",
+    examples: [
+      "I don't want to be late.",
+      "I don't want to argue about this.",
+      "I don't want to eat fast food today.",
+      "I don't want to disturb you.",
+    ],
+    verbsOrComplements: ['be late', 'argue about this', 'eat fast food', 'disturb you', 'stay home all day', 'lose my focus'],
+    starterPrompt: "I don't want to",
+    tips: 'Use "don\'t want to" for present negative preferences.',
+    commonMistake: {
+      incorrect: "I no want to go.",
+      correct: "I don't want to go.",
+      reason: 'English requires the auxiliary "do not / don\'t" for negative present statements.',
+    },
+  },
+  {
+    id: 'can-you',
+    pattern: 'Can you + VERB...?',
+    level: 'A1',
+    category: 'Polite Requests',
+    explanation: 'Used to ask someone to do something in casual, everyday situations.',
+    formula: 'Can you + Base Verb + Object/Please?',
+    examples: [
+      'Can you help me with this?',
+      'Can you speak a bit slower, please?',
+      'Can you pass me the salt?',
+      'Can you send me the link?',
+    ],
+    verbsOrComplements: ['help me with this', 'speak a bit slower', 'pass me the salt', 'send me the file', 'repeat what you said', 'call me later'],
+    starterPrompt: 'Can you',
+    tips: 'Adding "please" at the end makes casual requests friendlier.',
+    commonMistake: {
+      incorrect: 'Can you to help me?',
+      correct: 'Can you help me?',
+      reason: 'Modal verbs like "can" are followed directly by the bare infinitive (no "to").',
+    },
+  },
+
+  // A2 Level Patterns
+  {
+    id: 'im-going-to',
+    pattern: "I'm going to + VERB",
+    level: 'A2',
+    category: 'Desires & Intentions',
+    explanation: 'Used to express pre-planned future actions or predictions based on current evidence.',
+    formula: "I am (I'm) + going to + Base Verb + Time/Place",
+    examples: [
+      "I'm going to travel next month.",
+      "I'm going to cook dinner tonight.",
+      "I'm going to start my workout routine tomorrow.",
+      "I'm going to meet my friend at 5 PM.",
+    ],
+    verbsOrComplements: ['travel next month', 'cook dinner tonight', 'start exercising tomorrow', 'practice my English daily', 'apply for a new job'],
+    starterPrompt: "I'm going to",
+    tips: 'In casual conversational English, "going to" is frequently pronounced as "gonna".',
+    commonMistake: {
+      incorrect: "I going to travel tomorrow.",
+      correct: "I am going to travel tomorrow.",
+      reason: 'Do not omit the auxiliary "am" before "going to".',
+    },
+  },
+  {
+    id: 'i-would-like-to',
+    pattern: 'I would like to + VERB',
+    level: 'A2',
+    category: 'Polite Requests',
+    explanation: 'A polite, refined alternative to "I want to", ideal for restaurants, meetings, and customer service.',
+    formula: "Subject (I) + would like to (I'd like to) + Base Verb + Complement",
+    examples: [
+      'I would like to order a cup of coffee.',
+      'I would like to make a reservation for two.',
+      'I would like to ask a quick question.',
+      'I would like to introduce my colleague.',
+    ],
+    verbsOrComplements: ['order a cup of coffee', 'make a reservation', 'ask a question', 'thank everyone for coming', 'learn more about this project'],
+    starterPrompt: "I would like to",
+    tips: 'Contraction "I\'d like to" sounds very natural and warm in conversation.',
+    commonMistake: {
+      incorrect: 'I would like to ordering food.',
+      correct: 'I would like to order food.',
+      reason: 'Follow "would like to" with the base verb ("order"), not "-ing".',
+    },
+  },
+  {
+    id: 'i-used-to',
+    pattern: 'I used to + VERB',
+    level: 'A2',
+    category: 'Habits & Past',
+    explanation: 'Used for past habits or states that are no longer true today.',
+    formula: 'Subject (I) + used to + Base Verb + Complement',
+    examples: [
+      'I used to play football every weekend.',
+      'I used to live in a small village.',
+      'I used to be shy when speaking English.',
+      'I used to wake up late on Saturdays.',
+    ],
+    verbsOrComplements: ['play football every weekend', 'live in a small village', 'be shy when speaking', 'drink a lot of soda', 'work in retail'],
+    starterPrompt: 'I used to',
+    tips: '"I used to" implies you do NOT do this anymore.',
+    commonMistake: {
+      incorrect: 'I use to live in London last year.',
+      correct: 'I used to live in London.',
+      reason: 'The past habit form is written with a "d": "used to".',
+    },
+  },
+  {
+    id: 'could-you',
+    pattern: 'Could you + VERB...?',
+    level: 'A2',
+    category: 'Polite Requests',
+    explanation: 'A polite, courteous way to make requests or ask for assistance.',
+    formula: 'Could you + Base Verb + Object/Please?',
+    examples: [
+      'Could you please repeat that?',
+      'Could you explain this rule again?',
+      'Could you give me a hand with this box?',
+      'Could you tell me what time it is?',
+    ],
+    verbsOrComplements: ['please repeat that', 'explain this rule again', 'give me a hand', 'send me the details by email', 'hold the door for a moment'],
+    starterPrompt: 'Could you',
+    tips: '"Could you" is noticeably more polite than "Can you".',
+    commonMistake: {
+      incorrect: 'Could you to send the email?',
+      correct: 'Could you send the email?',
+      reason: 'No "to" after the modal "could".',
+    },
+  },
+  {
+    id: 'how-can-i',
+    pattern: 'How can I + VERB...?',
+    level: 'A2',
+    category: 'Questions & Clarifications',
+    explanation: 'Used to ask for practical instructions, directions, or methods.',
+    formula: 'How can I + Base Verb + Object/Complement?',
+    examples: [
+      'How can I improve my English fluency?',
+      'How can I get to the central station?',
+      'How can I reset my password?',
+      'How can I contact customer support?',
+    ],
+    verbsOrComplements: ['improve my English fluency', 'get to the central station', 'reset my account password', 'book a flight ticket online', 'speak more naturally'],
+    starterPrompt: 'How can I',
+    tips: 'Use "How can I" when seeking practical steps or actionable advice.',
+    commonMistake: {
+      incorrect: 'How I can improve my English?',
+      correct: 'How can I improve my English?',
+      reason: 'In direct questions, invert the auxiliary verb ("can") and the subject ("I").',
+    },
+  },
+
+  // B1 Level Patterns
+  {
+    id: 'im-interested-in',
+    pattern: "I'm interested in + NOUN / VERB-ing",
+    level: 'B1',
+    category: 'Preferences',
+    explanation: 'Used to talk about hobbies, academic passions, and career interests.',
+    formula: "I am (I'm) + interested in + Gerund (-ing) or Noun phrase",
+    examples: [
+      "I'm interested in learning digital marketing.",
+      "I'm interested in joining the debate club.",
+      "I'm interested in contemporary African literature.",
+      "I'm interested in improving my public speaking skills.",
+    ],
+    verbsOrComplements: ['learning digital marketing', 'joining the debate club', 'improving my public speaking', 'studying international relations', 'starting a tech business'],
+    starterPrompt: "I'm interested in",
+    tips: 'Prepositions like "in" MUST be followed by a noun or an -ing verb (gerund).',
+    commonMistake: {
+      incorrect: "I'm interested to learn photography.",
+      correct: "I'm interested in learning photography.",
+      reason: 'The correct collocation is "interested in + -ing", not "interested to + base".',
+    },
+  },
+  {
+    id: 'im-trying-to',
+    pattern: "I'm trying to + VERB",
+    level: 'B1',
+    category: 'Desires & Intentions',
+    explanation: 'Used to describe ongoing efforts and active goals you are currently working towards.',
+    formula: "I am (I'm) + trying to + Base Verb + Complement",
+    examples: [
+      "I'm trying to expand my vocabulary every day.",
+      "I'm trying to reduce my screen time.",
+      "I'm trying to understand the difference between these two tenses.",
+      "I'm trying to find an apartment closer to work.",
+    ],
+    verbsOrComplements: ['expand my vocabulary every day', 'reduce my screen time', 'understand this complex rule', 'save more money this year', 'speak without translating in my head'],
+    starterPrompt: "I'm trying to",
+    tips: 'Highlights the ongoing process and personal effort.',
+    commonMistake: {
+      incorrect: "I try to speaking better.",
+      correct: "I'm trying to speak better.",
+      reason: 'Use "trying to + base verb" for present ongoing initiatives.',
+    },
+  },
+  {
+    id: 'i-think-feel-believe',
+    pattern: 'I think / feel / believe that + CLAUSE',
+    level: 'B1',
+    category: 'Opinions & Beliefs',
+    explanation: 'Used to express personal perspectives, diplomatic thoughts, and judgments.',
+    formula: 'I think / feel / believe + (that) + Subject + Verb + Complement',
+    examples: [
+      'I think we should practice speaking every day.',
+      'I feel this approach is much more effective.',
+      'I believe consistent practice builds true confidence.',
+      'I think it will rain later this afternoon.',
+    ],
+    verbsOrComplements: ['we should practice speaking daily', 'this approach is more effective', 'consistent effort brings lasting success', 'technology can transform education'],
+    starterPrompt: 'I believe that',
+    tips: 'The word "that" is optional in spoken conversational English.',
+    commonMistake: {
+      incorrect: 'I am thinking that you are right.',
+      correct: 'I think that you are right.',
+      reason: 'For expressing opinions, "think" is a stative verb in simple present.',
+    },
+  },
+  {
+    id: 'would-you-mind',
+    pattern: 'Would you mind + VERB-ing...?',
+    level: 'B1',
+    category: 'Polite Requests',
+    explanation: 'One of the most polite and diplomatic ways to ask someone to do something.',
+    formula: 'Would you mind + Gerund (-ing) + Object/Complement?',
+    examples: [
+      'Would you mind closing the window?',
+      'Would you mind repeating that last sentence?',
+      'Would you mind sharing the presentation slides?',
+      'Would you mind waiting a couple of minutes?',
+    ],
+    verbsOrComplements: ['closing the window', 'repeating that sentence', 'sharing the slides with the team', 'waiting for a couple of minutes', 'speaking a little louder'],
+    starterPrompt: 'Would you mind',
+    tips: 'Important: To agree politely, answer "No, not at all!" or "Sure, I\'d be happy to!". Answering "Yes" literally means you DO mind (refusal).',
+    commonMistake: {
+      incorrect: 'Would you mind to close the window?',
+      correct: 'Would you mind closing the window?',
+      reason: '"Would you mind" is always followed by a gerund (-ing form).',
+    },
+  },
+  {
+    id: 'what-should-i',
+    pattern: 'What should I + VERB...?',
+    level: 'B1',
+    category: 'Questions & Clarifications',
+    explanation: 'Used to ask for recommendations, suggestions, or advice on what action to take.',
+    formula: 'What should I + Base Verb + Complement?',
+    examples: [
+      'What should I do in this situation?',
+      'What should I wear to the interview?',
+      'What should I focus on first to improve my speaking?',
+      'What should I bring to the dinner party?',
+    ],
+    verbsOrComplements: ['do in this situation', 'wear to the interview', 'focus on first to improve', 'say when answering difficult questions', 'read to expand my vocabulary'],
+    starterPrompt: 'What should I',
+    tips: '"Should" asks for guidance or an opinion on the best choice.',
+    commonMistake: {
+      incorrect: 'What I should do next?',
+      correct: 'What should I do next?',
+      reason: 'Remember question inversion: Question word + modal ("should") + subject ("I") + verb.',
+    },
+  },
+
+  // B2 Level Patterns
+  {
+    id: 'i-would-rather',
+    pattern: 'I would rather + VERB + than + VERB',
+    level: 'B2',
+    category: 'Preferences',
+    explanation: 'Used to express a clear preference between two options.',
+    formula: "Subject (I'd rather) + Base Verb (A) + than + Base Verb (B)",
+    examples: [
+      "I'd rather cook at home than order takeaway.",
+      "I would rather read a physical book than an e-book.",
+      "I'd rather practice real conversations than memorize grammar tables.",
+      "I'd rather walk to work than sit in heavy traffic.",
+    ],
+    verbsOrComplements: ['cook at home than eat out', 'practice real conversations than memorize rules', 'walk in the morning than stay indoors', 'invest in learning than buy gadgets'],
+    starterPrompt: "I would rather",
+    tips: 'Follow "would rather" with bare infinitive (no "to").',
+    commonMistake: {
+      incorrect: "I'd rather to stay home than going out.",
+      correct: "I'd rather stay home than go out.",
+      reason: 'Both verbs must be bare infinitives (no "to", no "-ing").',
+    },
+  },
+  {
+    id: 'im-not-sure-if',
+    pattern: "I'm not sure if / whether + CLAUSE",
+    level: 'B2',
+    category: 'Opinions & Beliefs',
+    explanation: 'A diplomatic way to express uncertainty, doubt, or gentle hesitation without sounding blunt.',
+    formula: "I'm not sure if / whether + Subject + Verb + Complement",
+    examples: [
+      "I'm not sure if that's the best solution for our team.",
+      "I'm not sure whether I will be free tomorrow evening.",
+      "I'm not sure if I understood your question correctly.",
+      "I'm not sure whether the store is open on Sundays.",
+    ],
+    verbsOrComplements: ["that's the best solution for our team", 'I understood your question correctly', 'we have enough time to finish this today', 'this phrasing is suitable for formal emails'],
+    starterPrompt: "I'm not sure if",
+    tips: 'Ideal for diplomatic discussions in workplace meetings.',
+    commonMistake: {
+      incorrect: "I am not sure if is it correct.",
+      correct: "I'm not sure if it is correct.",
+      reason: 'Embedded clauses use standard statement word order (subject before verb), not question inversion.',
+    },
+  },
+
+  // C1 Level Patterns
+  {
+    id: 'it-goes-without-saying',
+    pattern: 'It goes without saying that + CLAUSE',
+    level: 'C1',
+    category: 'Opinions & Beliefs',
+    explanation: 'Used in sophisticated discourse to emphasize something that is obvious and universally acknowledged.',
+    formula: 'It goes without saying that + Subject + Verb + Complement',
+    examples: [
+      'It goes without saying that consistent practice is key to fluency.',
+      'It goes without saying that customer satisfaction is our top priority.',
+      'It goes without saying that respect is fundamental in team collaboration.',
+    ],
+    verbsOrComplements: ['consistent practice is key to fluency', 'cultural awareness enriches international communication', 'clarity of thought precedes eloquent speech'],
+    starterPrompt: 'It goes without saying that',
+    tips: 'Adds rhetorical weight and formal polish to presentations and essays.',
+    commonMistake: {
+      incorrect: 'It goes without say that practice helps.',
+      correct: 'It goes without saying that practice helps.',
+      reason: 'The fixed idiom uses the gerund "saying".',
+    },
+  },
+  {
+    id: 'not-only-but-also',
+    pattern: 'Not only + AUX + SUBJECT + VERB, but also...',
+    level: 'C1',
+    category: 'Opinions & Beliefs',
+    explanation: 'Advanced grammatical inversion used for dramatic emphasis when connecting two strong points.',
+    formula: 'Not only + does/did/can + Subject + Base Verb, but + Subject + also + Verb',
+    examples: [
+      'Not only does she speak four languages, but she also writes poetry.',
+      'Not only did he complete the project on time, but he also exceeded all targets.',
+      'Not only can reading expand your vocabulary, but it also sharpens your critical thinking.',
+    ],
+    verbsOrComplements: ['does reading expand vocabulary, but it also improves writing', 'did the team deliver on time, but they also exceeded expectations', 'does this method save time, but it also increases accuracy'],
+    starterPrompt: 'Not only does',
+    tips: 'Inverting the auxiliary after "Not only" is a hallmark of upper-level C1/C2 English mastery.',
+    commonMistake: {
+      incorrect: 'Not only she speaks English, but also French.',
+      correct: 'Not only does she speak English, but she also speaks French.',
+      reason: 'Initial "Not only" triggers subject-auxiliary inversion ("does she speak").',
+    },
+  },
+];
