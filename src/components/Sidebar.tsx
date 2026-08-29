@@ -90,12 +90,17 @@ export const Sidebar: React.FC = () => {
       ],
     },
     {
-      section: 'AI Personal Tutor',
+      section: 'AI Personal Tutor & Memory',
       items: [
-        { id: 'ai_tutor', label: 'Alex (AI Tutor)', icon: <Sparkles size={18} className="text-indigo-500" />, badge: 'AI' },
+        { id: 'voice_tutor', label: 'AI Voice Tutor (Alex)', icon: <Mic size={18} className="text-emerald-500 animate-pulse" />, badge: 'Voice' },
+        { id: 'tutor_memory', label: 'My AI Tutor Memory', icon: <Sparkles size={18} className="text-indigo-500" />, badge: 'Memory' },
+        { id: 'ai_diagnostics', label: 'Skill Diagnostics', icon: <Zap size={18} className="text-amber-500" />, badge: 'Diagnostic' },
+        { id: 'emergency_help', label: 'I Need English Now', icon: <AlertTriangle size={18} className="text-rose-500" />, badge: 'Urgent' },
+        { id: 'word_retrieval', label: 'Word Retrieval Gym', icon: <BookOpen size={18} className="text-blue-500" />, badge: 'Recall' },
+        { id: 'ai_tutor', label: 'Alex (Chat Tutor)', icon: <MessageSquare size={18} className="text-purple-500" /> },
         { id: 'daily_session', label: '15-Min Daily Routine', icon: <Clock size={18} className="text-blue-500" />, badge: 'Daily' },
-        { id: 'writing_coach', label: 'AI Writing Coach', icon: <PenTool size={18} className="text-violet-500" />, badge: 'AI' },
-        { id: 'say_it_better', label: 'Say It Better', icon: <MessageSquare size={18} className="text-emerald-500" />, badge: 'Pro' },
+        { id: 'writing_coach', label: 'AI Writing Coach', icon: <PenTool size={18} className="text-violet-500" /> },
+        { id: 'say_it_better', label: 'Say It Better', icon: <MessageSquare size={18} className="text-emerald-500" /> },
         { id: 'how_do_i_say', label: 'How Do I Say This?', icon: <HelpCircle size={18} /> },
         {
           id: 'my_mistakes',

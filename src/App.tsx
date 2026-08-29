@@ -76,6 +76,13 @@ import { StructuredProgramsView } from './views/StructuredProgramsView';
 import { ContentLibraryView } from './views/ContentLibraryView';
 import { MyEnglishNotebookView } from './views/MyEnglishNotebookView';
 
+// Next-Gen Personal English Tutor & Diagnostic Engine Views
+import { TutorMemoryView } from './views/TutorMemoryView';
+import { AIDiagnosticsView } from './views/AIDiagnosticsView';
+import { VoiceTutorView } from './views/VoiceTutorView';
+import { EmergencyHelpView } from './views/EmergencyHelpView';
+import { WordRetrievalView } from './views/WordRetrievalView';
+
 const MainLayout: React.FC = () => {
   const { currentView, setCurrentView, searchOpen, setSearchOpen, placementTestOpen, setPlacementTestOpen, userStats, userProfile, addXP } =
     useApp();
@@ -314,6 +321,20 @@ const MainLayout: React.FC = () => {
         return <ProfileView />;
       case 'settings':
         return <SettingsView />;
+      case 'tutor_memory':
+      case 'ai_memory':
+        return <TutorMemoryView />;
+      case 'ai_diagnostics':
+      case 'diagnostics':
+        return <AIDiagnosticsView />;
+      case 'voice_tutor':
+        return <VoiceTutorView />;
+      case 'emergency_help':
+      case 'emergency_mode':
+        return <EmergencyHelpView />;
+      case 'word_retrieval':
+      case 'active_vocab':
+        return <WordRetrievalView />;
       default:
         return <DashboardView />;
     }

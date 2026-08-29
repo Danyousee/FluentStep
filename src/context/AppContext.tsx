@@ -20,6 +20,11 @@ import {
   MarketplaceCourse,
   SavedNotebookWord,
   InstantLesson,
+  LearnerMemory,
+  DiagnosticItem,
+  DetectedErrorPattern,
+  ActiveVocabWord,
+  ActiveVocabStage,
 } from '../types';
 import { soundService } from '../services/soundService';
 import {
@@ -32,6 +37,12 @@ import {
   INITIAL_MONTHLY_PROGRESS,
   INITIAL_NOTEBOOK_WORDS,
 } from '../data/coursesAndExamsData';
+import {
+  INITIAL_LEARNER_MEMORY,
+  INITIAL_DIAGNOSTICS,
+  INITIAL_ERROR_PATTERNS,
+  INITIAL_ACTIVE_VOCAB_WORDS,
+} from '../data/learnerMemoryAndDiagnosticsData';
 
 export type AppView =
   | 'landing'
@@ -56,6 +67,7 @@ export type AppView =
   | 'roadmap'
   | 'fluency_mode'
   | 'missions'
+  | 'real_life_missions'
   | 'phone_call'
   | 'voice_journal'
   | 'writing_challenges'
@@ -67,6 +79,12 @@ export type AppView =
   | 'my_words'
   | 'smart_review'
   | 'ai_tutor'
+  | 'voice_tutor'
+  | 'tutor_memory'
+  | 'ai_diagnostics'
+  | 'emergency_help'
+  | 'practice_everything'
+  | 'word_retrieval'
   | 'tutor'
   | 'my_mistakes'
   | 'say_it_better'
@@ -126,6 +144,28 @@ interface AppContextType {
   setSelectedListeningTopicId: (id: string | null) => void;
   selectedCommunicationLessonId: string | null;
   setSelectedCommunicationLessonId: (id: string | null) => void;
+
+  // AI Learning Memory ("My AI Tutor Memory") & Diagnostics
+  learnerMemory: LearnerMemory;
+  updateLearnerMemory: (updates: Partial<LearnerMemory>) => void;
+  resetLearnerMemory: () => void;
+  clearMemoryCategory: (category: 'mistakes' | 'conversations' | 'vocabulary' | 'all') => void;
+  memoryModalOpen: boolean;
+  setMemoryModalOpen: (open: boolean) => void;
+
+  diagnostics: DiagnosticItem[];
+  updateDiagnosticScore: (skill: string, newScore: number, deltaStr?: string) => void;
+  errorPatterns: DetectedErrorPattern[];
+  resolveErrorPattern: (patternId: string) => void;
+
+  // Active Vocabulary 3-Stage Model
+  activeVocabWords: ActiveVocabWord[];
+  advanceActiveVocabStage: (wordId: string, successStage: 'recognition' | 'recall' | 'usage') => void;
+  addCustomWordToActiveVocab: (word: Partial<ActiveVocabWord>) => void;
+
+  // Thinking in English Mode
+  thinkingMode: 'Beginner Support' | 'Balanced' | 'English Only';
+  setThinkingMode: (mode: 'Beginner Support' | 'Balanced' | 'English Only') => void;
 
   // New AI Course & Assessment State
   generatedCourses: GeneratedCourse[];
@@ -208,95 +248,42 @@ interface AppContextType {
 }
 
 const DEFAULT_PROFILE: UserProfile = {
-  name: 'Learner',
+  name: 'New Learner',
   level: 'Beginner',
   avatar: '🎓',
   joinedDate: 'August 2026',
-  goals: ['Speak confidently', 'Build vocabulary', 'Everyday communication'],
+  goals: ['Speak confidently', 'Master grammar & vocabulary', 'Everyday communication'],
   voiceSpeed: 1.0,
   voiceAccent: 'en-US',
   soundEffects: true,
   theme: 'light',
 };
 
-const DEFAULT_MISTAKES: MistakeRecord[] = [
-  {
-    id: 'mistake_1',
-    originalSentence: 'I went to market and I buy some food yesterday.',
-    correctedSentence: 'I went to the market and bought some food yesterday.',
-    explanation: "'yesterday' requires both actions in past tense ('went' and 'bought'), and 'market' takes 'the'.",
-    category: 'Past tense',
-    date: '2026-08-26',
-    mastered: false,
-    practiceCount: 1,
-  },
-  {
-    id: 'mistake_2',
-    originalSentence: 'She is living at London since two years.',
-    correctedSentence: 'She has been living in London for two years.',
-    explanation: "Use 'in' for large cities, 'for' for duration of time, and Present Perfect Continuous for ongoing duration.",
-    category: 'Prepositions',
-    date: '2026-08-25',
-    mastered: false,
-    practiceCount: 2,
-  },
-  {
-    id: 'mistake_3',
-    originalSentence: 'I want to do a mistake.',
-    correctedSentence: 'I made a mistake.',
-    explanation: "In English, the standard collocation is 'make a mistake' (never 'do a mistake').",
-    category: 'Collocations',
-    date: '2026-08-24',
-    mastered: true,
-    practiceCount: 4,
-  },
-];
+const DEFAULT_MISTAKES: MistakeRecord[] = [];
 
 const DEFAULT_STATS: UserStats = {
-  xp: 140,
-  streakDays: 3,
+  xp: 0,
+  streakDays: 0,
   lastActiveDate: new Date().toISOString().split('T')[0],
-  wordsLearned: ['vocab_borrow', 'vocab_polite', 'vocab_delicious', 'vocab_improve'],
-  wordsPracticing: ['vocab_reliable', 'vocab_ingredient', 'vocab_journey'],
-  srsWords: {
-    vocab_borrow: { status: 'FAMILIAR', nextReview: new Date().toISOString().split('T')[0], interval: 3 },
-    vocab_polite: { status: 'MASTERED', nextReview: '2026-09-02', interval: 14 },
-    vocab_delicious: { status: 'LEARNING', nextReview: new Date().toISOString().split('T')[0], interval: 1 },
-    vocab_reliable: { status: 'NEW', nextReview: new Date().toISOString().split('T')[0], interval: 0 },
-    vocab_improve: { status: 'FAMILIAR', nextReview: new Date().toISOString().split('T')[0], interval: 3 },
-  },
-  mistakes: DEFAULT_MISTAKES,
-  sentencesCompleted: 8,
-  conversationsCompleted: 2,
-  speakingMinutes: 15,
-  listeningCompleted: 2,
-  grammarMastery: {
-    grammar_articles: 80,
-    grammar_present_simple: 90,
-  },
-  completedLevels: [1, 2],
-  unlockedLevels: [1, 2, 3],
-  weakAreas: [
-    {
-      topic: 'Prepositions of Place (in, on, at)',
-      mistakeCount: 3,
-      lastOccurred: 'Yesterday',
-      recommendedLessonId: 'grammar_prepositions',
-    },
-    {
-      topic: 'Past Tense Irregular Verbs',
-      mistakeCount: 2,
-      lastOccurred: 'Today',
-      recommendedLessonId: 'grammar_past_simple',
-    },
-  ],
+  wordsLearned: [],
+  wordsPracticing: [],
+  srsWords: {},
+  mistakes: [],
+  sentencesCompleted: 0,
+  conversationsCompleted: 0,
+  speakingMinutes: 0,
+  listeningCompleted: 0,
+  grammarMastery: {},
+  completedLevels: [],
+  unlockedLevels: [1],
+  weakAreas: [],
   dailyGoal: {
-    targetWords: 10,
+    targetWords: 5,
     targetSentences: 5,
     targetConversations: 1,
-    currentWords: 6,
-    currentSentences: 3,
-    currentConversations: 1,
+    currentWords: 0,
+    currentSentences: 0,
+    currentConversations: 0,
   },
 };
 
@@ -306,7 +293,7 @@ const INITIAL_BADGES: Badge[] = [
     title: 'First 100 Words',
     description: 'Learn and master 100 English vocabulary words.',
     icon: '🏆',
-    progress: 14,
+    progress: 0,
     maxProgress: 100,
   },
   {
@@ -314,7 +301,7 @@ const INITIAL_BADGES: Badge[] = [
     title: '7-Day Streak',
     description: 'Practice English 7 consecutive days in a row.',
     icon: '🔥',
-    progress: 3,
+    progress: 0,
     maxProgress: 7,
   },
   {
@@ -322,16 +309,15 @@ const INITIAL_BADGES: Badge[] = [
     title: 'First Conversation',
     description: 'Complete a realistic dialogue with the AI Tutor.',
     icon: '💬',
-    progress: 2,
+    progress: 0,
     maxProgress: 1,
-    unlockedAt: '2026-08-25',
   },
   {
     id: 'badge_sentence_builder',
     title: 'Sentence Builder',
     description: 'Complete 25 sentence construction challenges.',
     icon: '✍️',
-    progress: 8,
+    progress: 0,
     maxProgress: 25,
   },
   {
@@ -339,7 +325,7 @@ const INITIAL_BADGES: Badge[] = [
     title: 'Grammar Master',
     description: 'Score 100% on 5 different grammar topic quizzes.',
     icon: '📚',
-    progress: 1,
+    progress: 0,
     maxProgress: 5,
   },
   {
@@ -347,16 +333,15 @@ const INITIAL_BADGES: Badge[] = [
     title: 'Speaking Starter',
     description: 'Practice 10 minutes of verbal speaking exercises.',
     icon: '🎤',
-    progress: 15,
+    progress: 0,
     maxProgress: 10,
-    unlockedAt: '2026-08-26',
   },
   {
     id: 'badge_mistake_destroyer',
     title: 'Mistake Master',
     description: 'Review and master 5 previous mistakes.',
     icon: '🎯',
-    progress: 1,
+    progress: 0,
     maxProgress: 5,
   },
 ];
@@ -426,6 +411,33 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     type: 'xp' | 'badge' | 'level' | 'info';
   } | null>(null);
 
+  // AI Learning Memory & Diagnostics State
+  const [learnerMemory, setLearnerMemory] = useState<LearnerMemory>(() => {
+    const saved = localStorage.getItem('fluentstep_learner_memory');
+    return saved ? JSON.parse(saved) : INITIAL_LEARNER_MEMORY;
+  });
+  const [memoryModalOpen, setMemoryModalOpen] = useState(false);
+
+  const [diagnostics, setDiagnostics] = useState<DiagnosticItem[]>(() => {
+    const saved = localStorage.getItem('fluentstep_diagnostics');
+    return saved ? JSON.parse(saved) : INITIAL_DIAGNOSTICS;
+  });
+
+  const [errorPatterns, setErrorPatterns] = useState<DetectedErrorPattern[]>(() => {
+    const saved = localStorage.getItem('fluentstep_error_patterns');
+    return saved ? JSON.parse(saved) : INITIAL_ERROR_PATTERNS;
+  });
+
+  const [activeVocabWords, setActiveVocabWords] = useState<ActiveVocabWord[]>(() => {
+    const saved = localStorage.getItem('fluentstep_active_vocab');
+    return saved ? JSON.parse(saved) : INITIAL_ACTIVE_VOCAB_WORDS;
+  });
+
+  const [thinkingMode, setThinkingMode] = useState<'Beginner Support' | 'Balanced' | 'English Only'>(() => {
+    const saved = localStorage.getItem('fluentstep_thinking_mode');
+    return (saved as any) || 'Balanced';
+  });
+
   // AI Courses & Assessment State
   const [generatedCourses, setGeneratedCourses] = useState<GeneratedCourse[]>(() => {
     const saved = localStorage.getItem('fluentstep_courses');
@@ -466,6 +478,34 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
   const [monthlyProgress] = useState<MonthlyProgressComparison[]>(INITIAL_MONTHLY_PROGRESS);
 
+  // Auto-reset once to ensure clean state for a new user
+  useEffect(() => {
+    const freshKey = 'fluentstep_v4_new_user_ready';
+    const isInitialized = localStorage.getItem(freshKey);
+    if (!isInitialized) {
+      localStorage.clear();
+      localStorage.setItem(freshKey, 'true');
+      setUserStats(DEFAULT_STATS);
+      setUserProfile(DEFAULT_PROFILE);
+      setBadges(INITIAL_BADGES);
+      setIsDailyChallengeCompleted(false);
+      setCertificates(INITIAL_CERTIFICATES);
+      setActiveCertificateId(null);
+      setInstantLessons([]);
+      setActiveInstantLesson(null);
+      setSpeakingAssessments([]);
+      setWritingAssessments([]);
+      setSkillProfile(INITIAL_SKILL_PROFILE);
+      setStructuredPrograms(INITIAL_STRUCTURED_PROGRAMS);
+      setSavedNotebookWords(INITIAL_NOTEBOOK_WORDS);
+      setGeneratedCourses(INITIAL_GENERATED_COURSES);
+      setLearnerMemory(INITIAL_LEARNER_MEMORY);
+      setDiagnostics(INITIAL_DIAGNOSTICS);
+      setErrorPatterns(INITIAL_ERROR_PATTERNS);
+      setActiveVocabWords(INITIAL_ACTIVE_VOCAB_WORDS);
+    }
+  }, []);
+
   const [structuredPrograms, setStructuredPrograms] = useState<StructuredProgram[]>(() => {
     const saved = localStorage.getItem('fluentstep_structured_programs');
     return saved ? JSON.parse(saved) : INITIAL_STRUCTURED_PROGRAMS;
@@ -478,6 +518,26 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     const saved = localStorage.getItem('fluentstep_notebook');
     return saved ? JSON.parse(saved) : INITIAL_NOTEBOOK_WORDS;
   });
+
+  useEffect(() => {
+    localStorage.setItem('fluentstep_learner_memory', JSON.stringify(learnerMemory));
+  }, [learnerMemory]);
+
+  useEffect(() => {
+    localStorage.setItem('fluentstep_diagnostics', JSON.stringify(diagnostics));
+  }, [diagnostics]);
+
+  useEffect(() => {
+    localStorage.setItem('fluentstep_error_patterns', JSON.stringify(errorPatterns));
+  }, [errorPatterns]);
+
+  useEffect(() => {
+    localStorage.setItem('fluentstep_active_vocab', JSON.stringify(activeVocabWords));
+  }, [activeVocabWords]);
+
+  useEffect(() => {
+    localStorage.setItem('fluentstep_thinking_mode', thinkingMode);
+  }, [thinkingMode]);
 
   // Sync state to localStorage
   useEffect(() => {
@@ -936,12 +996,150 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     setUserProfile((prev) => ({ ...prev, goals }));
   };
 
+  const updateLearnerMemory = (updates: Partial<LearnerMemory>) => {
+    setLearnerMemory((prev) => ({
+      ...prev,
+      ...updates,
+      lastUpdated: new Date().toISOString(),
+    }));
+  };
+
+  const resetLearnerMemory = () => {
+    setLearnerMemory(INITIAL_LEARNER_MEMORY);
+    setDiagnostics(INITIAL_DIAGNOSTICS);
+    setErrorPatterns(INITIAL_ERROR_PATTERNS);
+    setActiveVocabWords(INITIAL_ACTIVE_VOCAB_WORDS);
+    localStorage.removeItem('fluentstep_learner_memory');
+    localStorage.removeItem('fluentstep_diagnostics');
+    localStorage.removeItem('fluentstep_error_patterns');
+    localStorage.removeItem('fluentstep_active_vocab');
+    addXP(10, 'Tutor memory successfully cleared and refreshed.');
+  };
+
+  const clearMemoryCategory = (category: 'mistakes' | 'conversations' | 'vocabulary' | 'all') => {
+    if (category === 'all') {
+      resetLearnerMemory();
+      return;
+    }
+    setLearnerMemory((prev) => {
+      const updated = { ...prev, lastUpdated: new Date().toISOString() };
+      if (category === 'mistakes') {
+        updated.frequentMistakes = [];
+        updated.learningInsights = updated.learningInsights.filter((i) => i.type !== 'recurrent_error');
+      } else if (category === 'conversations') {
+        updated.conversationalTopics = [];
+        updated.interactionStats = { ...updated.interactionStats, totalConversations: 0 };
+      } else if (category === 'vocabulary') {
+        updated.masteredVocabulary = [];
+        updated.troubleVocabulary = [];
+      }
+      return updated;
+    });
+    addXP(10, `Cleared ${category} memory.`);
+  };
+
+  const updateDiagnosticScore = (skill: string, newScore: number, deltaStr: string = '+3%') => {
+    setDiagnostics((prev) =>
+      prev.map((item) =>
+        item.skill.toLowerCase() === skill.toLowerCase()
+          ? {
+              ...item,
+              score: Math.min(100, Math.max(0, newScore)),
+              trend: newScore >= item.score ? 'improving' : 'declining',
+              trendDelta: deltaStr,
+            }
+          : item
+      )
+    );
+  };
+
+  const resolveErrorPattern = (_patternId: string) => {
+    setErrorPatterns((prev) =>
+      prev.map((p) => (p.id === _patternId ? { ...p } : p))
+    );
+    addXP(25, 'Targeted error pattern resolved & mastered!');
+  };
+
+  const advanceActiveVocabStage = (wordId: string, successStage: 'recognition' | 'recall' | 'usage') => {
+    setActiveVocabWords((prev) =>
+      prev.map((w) => {
+        if (w.id !== wordId) return w;
+        let newStage: ActiveVocabStage = w.currentStage;
+        let newRecallCount = w.recallSuccessCount;
+        let newUsageCount = w.usageSuccessCount;
+        let newRecognitionCount = w.recognitionSuccessCount;
+
+        if (successStage === 'recognition') {
+          newRecognitionCount += 1;
+          if (w.currentStage === 'recognition') newStage = 'recall';
+        } else if (successStage === 'recall') {
+          newRecallCount += 1;
+          if (w.currentStage === 'recall' && newRecallCount >= 2) newStage = 'usage';
+        } else if (successStage === 'usage') {
+          newUsageCount += 1;
+          newStage = 'mastered';
+        }
+        return {
+          ...w,
+          currentStage: newStage,
+          recognitionSuccessCount: newRecognitionCount,
+          recallSuccessCount: newRecallCount,
+          usageSuccessCount: newUsageCount,
+          lastPracticedDate: new Date().toISOString().split('T')[0],
+          nextReviewDate: new Date(Date.now() + 86400000 * 2).toISOString().split('T')[0],
+        };
+      })
+    );
+    addXP(15, `Word advanced to ${successStage} stage!`);
+  };
+
+  const addCustomWordToActiveVocab = (word: Partial<ActiveVocabWord>) => {
+    const newWord: ActiveVocabWord = {
+      id: `act_${Date.now()}`,
+      word: word.word || 'new word',
+      phonetic: word.phonetic || '/.../',
+      partOfSpeech: word.partOfSpeech || 'noun',
+      definition: word.definition || '',
+      clueHint: word.clueHint || `What word means: "${word.definition}"?`,
+      collocations: word.collocations || [],
+      confusedWith: word.confusedWith,
+      confusionNote: word.confusionNote,
+      currentStage: 'recognition',
+      recognitionSuccessCount: 0,
+      recallSuccessCount: 0,
+      usageSuccessCount: 0,
+      lastPracticedDate: new Date().toISOString().split('T')[0],
+      nextReviewDate: new Date().toISOString().split('T')[0],
+      userCustomSentence: word.userCustomSentence || '',
+    };
+    setActiveVocabWords((prev) => [newWord, ...prev]);
+    addXP(10, `Added "${newWord.word}" to Active Vocabulary!`);
+  };
+
   const resetProgress = () => {
     setUserStats(DEFAULT_STATS);
     setUserProfile(DEFAULT_PROFILE);
     setBadges(INITIAL_BADGES);
     setIsDailyChallengeCompleted(false);
+    setCertificates([]);
+    setActiveCertificateId(null);
+    setInstantLessons([]);
+    setActiveInstantLesson(null);
+    setSpeakingAssessments([]);
+    setWritingAssessments([]);
+    setSkillProfile(INITIAL_SKILL_PROFILE);
+    setStructuredPrograms(INITIAL_STRUCTURED_PROGRAMS);
+    setSavedNotebookWords([]);
+    setGeneratedCourses(INITIAL_GENERATED_COURSES);
+    setActiveCourseId('course_workplace_mastery');
+    setActiveCourseLessonId('les_work_1_1');
+    setActiveMockTest(INITIAL_MOCK_TESTS['IELTS_ACADEMIC'] || null);
+    setLearnerMemory(INITIAL_LEARNER_MEMORY);
+    setDiagnostics(INITIAL_DIAGNOSTICS);
+    setErrorPatterns(INITIAL_ERROR_PATTERNS);
+    setActiveVocabWords(INITIAL_ACTIVE_VOCAB_WORDS);
     localStorage.clear();
+    localStorage.setItem('fluentstep_v4_new_user_ready', 'true');
     setCurrentView('dashboard');
   };
 
@@ -964,6 +1162,23 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         setSelectedListeningTopicId,
         selectedCommunicationLessonId,
         setSelectedCommunicationLessonId,
+
+        // AI Learning Memory & Diagnostics
+        learnerMemory,
+        updateLearnerMemory,
+        resetLearnerMemory,
+        clearMemoryCategory,
+        memoryModalOpen,
+        setMemoryModalOpen,
+        diagnostics,
+        updateDiagnosticScore,
+        errorPatterns,
+        resolveErrorPattern,
+        activeVocabWords,
+        advanceActiveVocabStage,
+        addCustomWordToActiveVocab,
+        thinkingMode,
+        setThinkingMode,
 
         // AI Courses & Assessment
         generatedCourses,

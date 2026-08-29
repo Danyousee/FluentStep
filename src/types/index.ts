@@ -1013,4 +1013,156 @@ export interface MarketplaceCourse {
   modulesCount: number;
 }
 
+// 22. AI Learning Memory System ("My AI Tutor Memory")
+export interface ConfusedWordPair {
+  pair: string;
+  explanation: string;
+  exampleA: string;
+  exampleB: string;
+  lastPracticed?: string;
+}
+
+export interface LearnerMemory {
+  currentLevel: UserLevel;
+  targetLevel: UserLevel;
+  learningGoals: string[];
+  preferredDifficulty: 'Beginner' | 'Intermediate' | 'Advanced';
+  topicsStudied: string[];
+  topicsMastered: string[];
+  vocabularyLearned: string[];
+  difficultVocabulary: string[];
+  commonGrammarMistakes: string[];
+  commonSentenceMistakes: string[];
+  frequentlyConfusedWords: ConfusedWordPair[];
+  frequentlyUsedIncorrectExpressions: { wrong: string; right: string; context?: string }[];
+  speakingWeaknesses: string[];
+  writingWeaknesses: string[];
+  listeningWeaknesses: string[];
+  recentConversations: { id: string; topic: string; date: string; score: number; attemptNumber?: number }[];
+  recentAssessments: { type: string; date: string; score: number }[];
+  recommendedTopics: string[];
+  streakDays: number;
+  lastUpdated: string;
+  totalConversationsCompleted: number;
+  totalWordsRetrieved: number;
+}
+
+// 23. AI Skill Diagnostics & Root Cause Analysis
+export type DiagnosticSkillCategory =
+  | 'Vocabulary'
+  | 'Grammar'
+  | 'Sentence Building'
+  | 'Speaking'
+  | 'Listening'
+  | 'Reading'
+  | 'Writing'
+  | 'Conversation';
+
+export interface DiagnosticItem {
+  skill: DiagnosticSkillCategory;
+  score: number; // 0 - 100
+  trend: 'improving' | 'steady' | 'declining';
+  trendDelta: string; // e.g. "+12%" or "-4%"
+  strength: string;
+  rootCauseWeakness: string;
+  evidenceExamples: string[];
+  recommendedAction: string;
+  practiceModuleId: string;
+  lastAssessedDate: string;
+}
+
+export interface DetectedErrorPattern {
+  id: string;
+  patternTitle: string;
+  category: 'grammar' | 'vocabulary' | 'sentence_structure' | 'preposition' | 'collocation';
+  wrongExamples: string[];
+  correctExamples: string[];
+  rootCause: string;
+  remedyTip: string;
+  practicePrompt: string;
+  practiceOptions: string[];
+  correctIndex: number;
+  practiceExplanation: string;
+}
+
+// 24. Active Vocabulary 3-Stage Model
+export type ActiveVocabStage = 'recognition' | 'recall' | 'usage' | 'mastered';
+
+export interface ActiveVocabWord {
+  id: string;
+  word: string;
+  phonetic: string;
+  partOfSpeech: PartOfSpeech;
+  definition: string;
+  clueHint: string;
+  collocations: string[];
+  confusedWith?: string;
+  confusionNote?: string;
+  currentStage: ActiveVocabStage;
+  recognitionSuccessCount: number;
+  recallSuccessCount: number;
+  usageSuccessCount: number;
+  lastPracticedDate: string;
+  nextReviewDate: string;
+  userCustomSentence?: string;
+}
+
+// 25. Emergency Help Mode ("I Need English Now")
+export interface EmergencyHelpSession {
+  scenarioId: string;
+  scenarioTitle: string;
+  urgencyReason: string;
+  targetTone: 'Polite' | 'Professional' | 'Clear & Direct' | 'Calm & Assertive';
+  topPhrases: { phrase: string; meaning: string; pronunciationTip?: string }[];
+  keyVocabulary: { word: string; meaning: string; phonetic: string }[];
+  goldenRuleTip: string;
+  quickPracticeExercises: {
+    prompt: string;
+    targetSentence: string;
+    jumbledWords: string[];
+    hint: string;
+  }[];
+  roleplayDialogue: {
+    partnerName: string;
+    partnerRole: string;
+    openingLine: string;
+    suggestedResponses: string[];
+  };
+}
+
+// 26. Voice Tutor Session & Assessment
+export interface VoiceTutorTurn {
+  id: string;
+  speaker: 'user' | 'tutor';
+  text: string;
+  audioUrl?: string;
+  timestamp: string;
+  correction?: {
+    original: string;
+    corrected: string;
+    explanation: string;
+    hasMistake: boolean;
+  };
+  suggestedReplies?: string[];
+}
+
+export interface VoiceConversationReport {
+  overallScore: number;
+  communicationScore: number;
+  grammarScore: number;
+  vocabularyScore: number;
+  sentenceVarietyScore: number;
+  fluencyScore: number;
+  isAiEstimated: boolean;
+  attemptNumber: number;
+  previousAttemptScore?: number;
+  improvementDelta?: number;
+  strengths: string[];
+  areasToImprove: string[];
+  mistakesAndCorrections: { wrong: string; right: string; reason: string }[];
+  usefulExpressions: { expression: string; context: string }[];
+  recommendation: string;
+}
+
+
 

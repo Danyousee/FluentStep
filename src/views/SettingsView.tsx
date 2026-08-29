@@ -15,13 +15,14 @@ import { useApp } from '../context/AppContext';
 import { soundService } from '../services/soundService';
 
 export const SettingsView: React.FC = () => {
-  const { theme, toggleTheme, userProfile, updateProfile } = useApp();
+  const { theme, toggleTheme, userProfile, updateProfile, resetProgress } = useApp();
 
   const [soundEffects, setSoundEffects] = useState(true);
   const [speechSpeed, setSpeechSpeed] = useState<'0.8' | '1.0' | '1.2'>('1.0');
   const [accent, setAccent] = useState<'US' | 'UK'>('US');
   const [tutorStyle, setTutorStyle] = useState<'friendly' | 'academic'>('friendly');
   const [exportedSuccess, setExportedSuccess] = useState(false);
+  const [resetSuccess, setResetSuccess] = useState(false);
 
   const handleExportData = () => {
     const backup = {
@@ -42,14 +43,9 @@ export const SettingsView: React.FC = () => {
   };
 
   const handleResetData = () => {
-    if (
-      window.confirm(
-        'Are you sure you want to reset your local progress? This action cannot be undone.'
-      )
-    ) {
-      localStorage.clear();
-      window.location.reload();
-    }
+    resetProgress();
+    setResetSuccess(true);
+    setTimeout(() => setResetSuccess(false), 3000);
   };
 
   return (
@@ -236,8 +232,17 @@ export const SettingsView: React.FC = () => {
             onClick={handleResetData}
             className="px-5 py-3 rounded-2xl bg-rose-50 dark:bg-rose-950/40 hover:bg-rose-100 text-xs font-bold text-rose-700 dark:text-rose-300 border border-rose-200 dark:border-rose-900 flex items-center justify-center gap-2 transition-all"
           >
-            <Trash2 size={16} />
-            <span>Reset All Learning Data</span>
+            {resetSuccess ? (
+              <>
+                <Check size={16} className="text-rose-600 dark:text-rose-400" />
+                <span>Reset to New User Completed!</span>
+              </>
+            ) : (
+              <>
+                <Trash2 size={16} />
+                <span>Reset All Learning Data</span>
+              </>
+            )}
           </button>
         </div>
       </div>

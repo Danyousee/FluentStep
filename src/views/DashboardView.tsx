@@ -100,7 +100,7 @@ export const DashboardView: React.FC = () => {
 
           <div className="text-center px-4 py-2 bg-white dark:bg-slate-900 rounded-2xl shadow-xs border border-slate-200/80 dark:border-slate-800 min-w-[110px]">
             <p className="text-2xl font-bold text-orange-500 leading-none flex items-center justify-center gap-1">
-              <Flame className="w-5 h-5 text-orange-500 inline" /> {userStats.streak}
+              <Flame className="w-5 h-5 text-orange-500 inline" /> {userStats.streakDays}
             </p>
             <p className="text-[10px] text-slate-400 font-bold uppercase mt-1 tracking-tight">
               Day Streak
@@ -145,41 +145,126 @@ export const DashboardView: React.FC = () => {
       {/* AI Personal English Tutor Featured Banner */}
       <div
         id="dash-ai-tutor-banner"
-        className="bg-gradient-to-r from-indigo-900 via-indigo-850 to-slate-900 text-white rounded-3xl p-6 sm:p-8 shadow-lg border border-indigo-700/50 flex flex-col md:flex-row md:items-center justify-between gap-6"
+        className="bg-gradient-to-r from-indigo-950 via-slate-900 to-indigo-900 text-white rounded-3xl p-6 sm:p-8 shadow-xl border border-indigo-500/30 flex flex-col lg:flex-row lg:items-center justify-between gap-6 relative overflow-hidden"
       >
-        <div className="flex items-center gap-4">
+        <div className="flex items-center gap-4 relative z-10">
           <div className="relative shrink-0">
-            <div className="w-16 h-16 rounded-full bg-gradient-to-tr from-indigo-500 to-indigo-300 flex items-center justify-center text-3xl shadow-md">
-              👨‍🏫
+            <div className="w-16 h-16 rounded-2xl bg-gradient-to-tr from-indigo-600 to-indigo-400 flex items-center justify-center text-3xl shadow-md border border-indigo-300/30">
+              🎙️
             </div>
-            <span className="absolute bottom-0 right-0 w-4 h-4 bg-emerald-400 border-2 border-slate-900 rounded-full"></span>
+            <span className="absolute -bottom-1 -right-1 w-4 h-4 bg-emerald-400 border-2 border-slate-900 rounded-full animate-ping"></span>
+            <span className="absolute -bottom-1 -right-1 w-4 h-4 bg-emerald-400 border-2 border-slate-900 rounded-full"></span>
           </div>
 
           <div className="space-y-1">
             <div className="flex items-center gap-2">
-              <span className="text-xs font-bold uppercase tracking-widest text-indigo-300 bg-indigo-950/80 px-2.5 py-0.5 rounded-full border border-indigo-700">
-                Personal AI Tutor
+              <span className="text-xs font-bold uppercase tracking-widest text-emerald-300 bg-emerald-950/80 px-2.5 py-0.5 rounded-full border border-emerald-700/60">
+                Personal AI Tutor & Memory
               </span>
-              <span className="text-xs text-indigo-200">Online & Ready</span>
+              <span className="text-xs text-indigo-200">Active Adaptation Enabled</span>
             </div>
-            <h2 className="text-xl sm:text-2xl font-bold">
-              Chat with Alex • {userProfile.level} English
+            <h2 className="text-xl sm:text-2xl font-black text-white">
+              Voice Tutor Alex • {userProfile.level} English
             </h2>
-            <p className="text-xs sm:text-sm text-indigo-200/90 max-w-lg leading-relaxed">
-              Ask about grammar rules, practice realistic dialogues, fix sentences, or speak via microphone with real-time feedback.
+            <p className="text-xs sm:text-sm text-slate-300 max-w-xl leading-relaxed">
+              Talk freely via microphone. Alex remembers your common mistakes, guides natural conversations, and provides gentle, real-time diagnostic feedback.
             </p>
           </div>
         </div>
 
-        <div className="flex flex-wrap items-center gap-3">
+        <div className="flex flex-wrap items-center gap-3 relative z-10 shrink-0">
           <button
-            onClick={() => setCurrentView('ai_tutor')}
-            className="px-6 py-3 bg-white text-indigo-950 hover:bg-indigo-50 font-bold text-sm rounded-2xl shadow-md active:scale-95 transition-all flex items-center gap-2"
+            id="dash_btn_voice_tutor_start"
+            onClick={() => setCurrentView('voice_tutor')}
+            className="px-6 py-3 bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-black text-sm rounded-2xl shadow-lg shadow-emerald-500/20 active:scale-95 transition-all flex items-center gap-2 cursor-pointer"
           >
-            <Sparkles className="w-4 h-4 text-indigo-600" />
-            <span>Start Tutor Chat</span>
+            <Mic className="w-4 h-4 text-slate-950" />
+            <span>Launch Voice Tutor</span>
+          </button>
+          <button
+            id="dash_btn_tutor_memory_open"
+            onClick={() => setCurrentView('tutor_memory')}
+            className="px-5 py-3 bg-white/10 hover:bg-white/20 text-white font-bold text-sm rounded-2xl border border-white/15 active:scale-95 transition-all flex items-center gap-2 cursor-pointer"
+          >
+            <Sparkles className="w-4 h-4 text-indigo-300" />
+            <span>Tutor Memory</span>
           </button>
         </div>
+      </div>
+
+      {/* Flagship AI Navigation Row */}
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+        <button
+          id="dash_card_diagnostics"
+          onClick={() => setCurrentView('ai_diagnostics')}
+          className="p-4 bg-white dark:bg-slate-900 rounded-3xl border border-slate-200 dark:border-slate-800 hover:border-indigo-400 dark:hover:border-indigo-600 transition-all text-left group shadow-xs cursor-pointer flex flex-col justify-between"
+        >
+          <div className="p-2.5 bg-amber-50 dark:bg-amber-950/60 text-amber-600 dark:text-amber-400 rounded-2xl w-fit mb-3 group-hover:scale-110 transition-transform">
+            <Zap className="w-5 h-5" />
+          </div>
+          <div>
+            <div className="font-extrabold text-sm text-slate-900 dark:text-white group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors">
+              Skill Diagnostics
+            </div>
+            <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+              Root-cause analysis & error patterns
+            </p>
+          </div>
+        </button>
+
+        <button
+          id="dash_card_emergency_help"
+          onClick={() => setCurrentView('emergency_help')}
+          className="p-4 bg-white dark:bg-slate-900 rounded-3xl border border-slate-200 dark:border-slate-800 hover:border-rose-400 dark:hover:border-rose-600 transition-all text-left group shadow-xs cursor-pointer flex flex-col justify-between"
+        >
+          <div className="p-2.5 bg-rose-50 dark:bg-rose-950/60 text-rose-600 dark:text-rose-400 rounded-2xl w-fit mb-3 group-hover:scale-110 transition-transform">
+            <AlertCircle className="w-5 h-5" />
+          </div>
+          <div>
+            <div className="font-extrabold text-sm text-slate-900 dark:text-white group-hover:text-rose-600 dark:group-hover:text-rose-400 transition-colors">
+              I Need English Now
+            </div>
+            <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+              Emergency high-stakes quick prep
+            </p>
+          </div>
+        </button>
+
+        <button
+          id="dash_card_word_retrieval"
+          onClick={() => setCurrentView('word_retrieval')}
+          className="p-4 bg-white dark:bg-slate-900 rounded-3xl border border-slate-200 dark:border-slate-800 hover:border-emerald-400 dark:hover:border-emerald-600 transition-all text-left group shadow-xs cursor-pointer flex flex-col justify-between"
+        >
+          <div className="p-2.5 bg-emerald-50 dark:bg-emerald-950/60 text-emerald-600 dark:text-emerald-400 rounded-2xl w-fit mb-3 group-hover:scale-110 transition-transform">
+            <BookOpen className="w-5 h-5" />
+          </div>
+          <div>
+            <div className="font-extrabold text-sm text-slate-900 dark:text-white group-hover:text-emerald-600 dark:group-hover:text-emerald-400 transition-colors">
+              Word Retrieval Gym
+            </div>
+            <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+              Timed active vocabulary recall
+            </p>
+          </div>
+        </button>
+
+        <button
+          id="dash_card_missions"
+          onClick={() => setCurrentView('missions')}
+          className="p-4 bg-white dark:bg-slate-900 rounded-3xl border border-slate-200 dark:border-slate-800 hover:border-blue-400 dark:hover:border-blue-600 transition-all text-left group shadow-xs cursor-pointer flex flex-col justify-between"
+        >
+          <div className="p-2.5 bg-blue-50 dark:bg-blue-950/60 text-blue-600 dark:text-blue-400 rounded-2xl w-fit mb-3 group-hover:scale-110 transition-transform">
+            <Compass className="w-5 h-5" />
+          </div>
+          <div>
+            <div className="font-extrabold text-sm text-slate-900 dark:text-white group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors">
+              Real-Life Missions
+            </div>
+            <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+              Goal-driven audio roleplay
+            </p>
+          </div>
+        </button>
       </div>
 
       {/* 6 Quick AI Power Actions */}

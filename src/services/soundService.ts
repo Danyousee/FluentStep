@@ -32,6 +32,10 @@ class SoundService {
     this.stopAudio();
   }
 
+  public cancelSpeech(): void {
+    this.stop();
+  }
+
   private getAudioContext(): AudioContext | null {
     if (typeof window === 'undefined') return null;
     if (!this.audioCtx) {

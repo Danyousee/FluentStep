@@ -496,8 +496,8 @@ export const INITIAL_STRUCTURED_PROGRAMS: StructuredProgram[] = [
     subtitle: 'Foundation, Daily Fluency & Core Grammar Habits',
     description: 'Transform your daily English routine with 15 focused minutes every day. Target everyday social conversation and eliminate common hesitation.',
     targetLevel: 'A2',
-    currentDay: 4,
-    status: 'in_progress',
+    currentDay: 1,
+    status: 'not_started',
     days: Array.from({ length: 30 }, (_, i) => ({
       dayNumber: i + 1,
       title: [
@@ -511,7 +511,7 @@ export const INITIAL_STRUCTURED_PROGRAMS: StructuredProgram[] = [
       ][i % 7],
       summary: 'Practical micro-drills combining grammar accuracy and spoken output.',
       focusSkill: ['Speaking', 'Grammar', 'Vocabulary', 'Conversation', 'Listening', 'Assessment', 'Review'][i % 7],
-      completed: i < 3,
+      completed: false,
       xpReward: 30,
       tasks: [
         {
@@ -520,7 +520,7 @@ export const INITIAL_STRUCTURED_PROGRAMS: StructuredProgram[] = [
           type: 'learn',
           description: 'Review the daily rule and real-life examples.',
           targetNav: { page: 'daily_session' },
-          completed: i < 3,
+          completed: false,
         },
         {
           id: `task_${i}_2`,
@@ -528,7 +528,7 @@ export const INITIAL_STRUCTURED_PROGRAMS: StructuredProgram[] = [
           type: 'practice',
           description: 'Form 3 accurate sentences with instant feedback.',
           targetNav: { page: 'sentence_builder' },
-          completed: i < 3,
+          completed: false,
         },
         {
           id: `task_${i}_3`,
@@ -536,7 +536,7 @@ export const INITIAL_STRUCTURED_PROGRAMS: StructuredProgram[] = [
           type: 'speak',
           description: 'Speak your response aloud to Alex the AI Tutor.',
           targetNav: { page: 'ai_tutor' },
-          completed: i < 3,
+          completed: false,
         },
       ],
     })),
@@ -692,73 +692,24 @@ export const INITIAL_MARKETPLACE_COURSES: MarketplaceCourse[] = [
   },
 ];
 
-export const INITIAL_CERTIFICATES: PlatformCertificate[] = [
-  {
-    id: 'cert_101',
-    certificateNumber: 'FS-2026-ENG-84920',
-    studentName: 'Alex Mercer',
-    courseTitle: 'Foundational Spoken English & Grammar Fluency',
-    level: 'CEFR B1 (Intermediate)',
-    completionDate: 'August 24, 2026',
-    scorePercent: 94,
-    skillsPracticed: ['Spoken Fluency', 'Sentence Construction', 'Grammar Accuracy', 'Active Listening'],
-    hoursSpent: 22,
-    verifyUrl: 'https://fluentstep.app/verify/FS-2026-ENG-84920',
-    badgeTitle: 'Verified Course Graduate',
-  },
-];
+export const INITIAL_CERTIFICATES: PlatformCertificate[] = [];
 
 export const INITIAL_SKILL_PROFILE: SkillProfile = {
-  vocabulary: 'B2',
-  grammar: 'B1',
-  sentenceConstruction: 'B2',
-  reading: 'B2',
-  listening: 'B2',
-  writing: 'B1',
-  speaking: 'B1',
-  conversation: 'B1',
-  overallCEFR: 'B1+ Threshold Intermediate',
-  transitionNote: 'Approaching B2 Vantage level! Strengthening writing structure and speaking speed will complete your B2 transition.',
+  vocabulary: 'A1',
+  grammar: 'A1',
+  sentenceConstruction: 'A1',
+  reading: 'A1',
+  listening: 'A1',
+  writing: 'A1',
+  speaking: 'A1',
+  conversation: 'A1',
+  overallCEFR: 'A1 Beginner (Ready to Calibrate)',
+  transitionNote: 'Welcome to FluentStep! Complete your initial lessons, AI teacher sessions, or placement diagnostic to calibrate your skills.',
 };
 
 export const INITIAL_MONTHLY_PROGRESS: MonthlyProgressComparison[] = [
-  { month: 'June', grammar: 55, speaking: 50, vocabulary: 60, listening: 58, writing: 48, reading: 62 },
-  { month: 'July', grammar: 65, speaking: 60, vocabulary: 70, listening: 68, writing: 58, reading: 72 },
-  { month: 'August', grammar: 78, speaking: 74, vocabulary: 84, listening: 80, writing: 68, reading: 85 },
+  { month: 'Start', grammar: 10, speaking: 10, vocabulary: 10, listening: 10, writing: 10, reading: 10 },
 ];
 
-export const INITIAL_NOTEBOOK_WORDS: SavedNotebookWord[] = [
-  {
-    id: 'sn_1',
-    wordOrPhrase: 'chime in',
-    type: 'phrasal_verb',
-    meaning: 'To join or interrupt a conversation politely with a comment or opinion.',
-    exampleSentence: 'May I quickly chime in with an observation?',
-    folder: 'Work',
-    dateAdded: '2026-08-25',
-    notes: 'Great for meeting interjections.',
-    masteryStatus: 'FAMILIAR',
-  },
-  {
-    id: 'sn_2',
-    wordOrPhrase: 'Provided that',
-    type: 'phrase',
-    meaning: 'Only on the condition that (conditional agreement).',
-    exampleSentence: 'We can proceed provided that the contract is signed by noon.',
-    folder: 'Work',
-    dateAdded: '2026-08-26',
-    notes: 'Professional alternative to "as long as".',
-    masteryStatus: 'LEARNING',
-  },
-  {
-    id: 'sn_3',
-    wordOrPhrase: 'mitigate',
-    type: 'word',
-    meaning: 'To make something less severe, harmful, or painful.',
-    exampleSentence: 'We implemented new procedures to mitigate financial risks.',
-    folder: 'Exam',
-    dateAdded: '2026-08-27',
-    notes: 'High-yield IELTS Academic word.',
-    masteryStatus: 'MASTERED',
-  },
-];
+export const INITIAL_NOTEBOOK_WORDS: SavedNotebookWord[] = [];
+

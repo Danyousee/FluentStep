@@ -35,11 +35,11 @@ export const Navbar: React.FC = () => {
         className="flex md:hidden items-center gap-2 cursor-pointer"
         onClick={() => setCurrentView('dashboard')}
       >
-        <div className="w-8 h-8 bg-indigo-600 rounded-lg flex items-center justify-center text-white font-bold text-base">
-          L
+        <div className="w-8 h-8 bg-emerald-600 rounded-lg flex items-center justify-center text-white font-bold text-base">
+          F
         </div>
         <span className="font-bold text-slate-800 dark:text-slate-100 text-base">
-          LingoFlow
+          FluentStep
         </span>
       </div>
 
