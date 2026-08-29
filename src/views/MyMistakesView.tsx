@@ -13,14 +13,67 @@ import {
   Filter,
   Check,
   Award,
+  Zap,
+  Mic,
+  MicOff,
+  Lightbulb,
+  Trash2,
+  Layers,
 } from 'lucide-react';
 import { useApp } from '../context/AppContext';
 import { MistakeRecord } from '../types';
 import { generateMistakesPracticeWithAI, MistakesPracticeResponseData } from '../services/aiService';
 import { soundService } from '../services/soundService';
+import { speechRecognitionService } from '../services/speechRecognitionService';
+import { SentenceLearningLoopModal } from '../components/SentenceLearningLoopModal';
+
+const CURATED_COMMON_PITFALLS: Omit<MistakeRecord, 'id' | 'date' | 'practiceCount' | 'mastered'>[] = [
+  {
+    originalSentence: "I am agree with your opinion.",
+    correctedSentence: "I agree with your opinion.",
+    explanation: "'Agree' is a verb in English, not an adjective. You say 'I agree', not 'I am agree'.",
+    category: 'Sentence structure',
+    sourceLesson: 'Core Pitfalls',
+  },
+  {
+    originalSentence: "She explained me the problem yesterday.",
+    correctedSentence: "She explained the problem to me yesterday.",
+    explanation: "'Explain' requires the preposition 'to' before the person receiving the explanation: 'explain something to someone'.",
+    category: 'Prepositions',
+    sourceLesson: 'Core Pitfalls',
+  },
+  {
+    originalSentence: "I have visited London three years ago.",
+    correctedSentence: "I visited London three years ago.",
+    explanation: "When you specify a completed past time (like 'three years ago'), use Simple Past, not Present Perfect.",
+    category: 'Past tense',
+    sourceLesson: 'Core Pitfalls',
+  },
+  {
+    originalSentence: "I look forward to hear from you soon.",
+    correctedSentence: "I look forward to hearing from you soon.",
+    explanation: "In 'look forward to', 'to' is a preposition, so it must be followed by a gerund (verb-ing).",
+    category: 'Collocations',
+    sourceLesson: 'Core Pitfalls',
+  },
+  {
+    originalSentence: "He does not have many informations about the project.",
+    correctedSentence: "He does not have much information about the project.",
+    explanation: "'Information' is an uncountable noun in English. It never takes an 's' and pairs with 'much' instead of 'many'.",
+    category: 'Vocabulary',
+    sourceLesson: 'Core Pitfalls',
+  },
+  {
+    originalSentence: "I am living here since two years.",
+    correctedSentence: "I have been living here for two years.",
+    explanation: "Use Present Perfect Continuous ('have been living') with 'for' to describe an action that started in the past and continues now.",
+    category: 'Past tense',
+    sourceLesson: 'Core Pitfalls',
+  },
+];
 
 export const MyMistakesView: React.FC = () => {
-  const { userStats, resolveMistake, addMistakeRecord, addXP, userProfile } = useApp();
+  const { userStats, resolveMistake, addMistakeRecord, addXP, userProfile, recordSpeakingPractice } = useApp();
   const [activeCategory, setActiveCategory] = useState<string>('All');
   const [filterMastered, setFilterMastered] = useState<'all' | 'unmastered' | 'mastered'>('all');
   const [isPracticing, setIsPracticing] = useState(false);
@@ -31,6 +84,19 @@ export const MyMistakesView: React.FC = () => {
   const [score, setScore] = useState(0);
   const [isGeneratingPractice, setIsGeneratingPractice] = useState(false);
   const [showAddModal, setShowAddModal] = useState(false);
+
+  // Individual Mistake Recovery Surgery Gym
+  const [activeSurgeryMistake, setActiveSurgeryMistake] = useState<MistakeRecord | null>(null);
+  const [surgeryTokens, setSurgeryTokens] = useState<string[]>([]);
+  const [selectedSurgeryTokens, setSelectedSurgeryTokens] = useState<string[]>([]);
+  const [surgeryVerified, setSurgeryVerified] = useState<boolean | null>(null);
+  const [isListeningSurgery, setIsListeningSurgery] = useState(false);
+  const [spokenSurgeryTranscript, setSpokenSurgeryTranscript] = useState('');
+  const [surgerySpeechScore, setSurgerySpeechScore] = useState<number | null>(null);
+
+  // 10-Stage Sentence Learning Loop State
+  const [sentenceLoopOpen, setSentenceLoopOpen] = useState(false);
+  const [sentenceLoopTarget, setSentenceLoopTarget] = useState('discuss');
 
   // New mistake manual form
   const [newOriginal, setNewOriginal] = useState('');
@@ -56,6 +122,107 @@ export const MyMistakesView: React.FC = () => {
   const masteredCount = mistakes.filter((m) => m.mastered).length;
   const unmasteredCount = mistakes.filter((m) => !m.mastered).length;
   const masteryPercentage = mistakes.length > 0 ? Math.round((masteredCount / mistakes.length) * 100) : 0;
+
+  const handleSeedCommonMistakes = () => {
+    CURATED_COMMON_PITFALLS.forEach((p) => {
+      addMistakeRecord(p);
+    });
+    soundService.playFanfare();
+    addXP(25, 'Imported Core English Pitfalls');
+  };
+
+  const handleStartSurgery = (item: MistakeRecord) => {
+    setActiveSurgeryMistake(item);
+    const words = item.correctedSentence.replace(/[.,?!]/g, '').split(/\s+/).filter(Boolean);
+    setSurgeryTokens([...words].sort(() => Math.random() - 0.5));
+    setSelectedSurgeryTokens([]);
+    setSurgeryVerified(null);
+    setSpokenSurgeryTranscript('');
+    setSurgerySpeechScore(null);
+    soundService.playPop();
+  };
+
+  const handleSelectSurgeryToken = (word: string, index: number) => {
+    soundService.playPop();
+    setSelectedSurgeryTokens([...selectedSurgeryTokens, word]);
+    const updated = [...surgeryTokens];
+    updated.splice(index, 1);
+    setSurgeryTokens(updated);
+    setSurgeryVerified(null);
+  };
+
+  const handleDeselectSurgeryToken = (word: string, index: number) => {
+    soundService.playPop();
+    const updated = [...selectedSurgeryTokens];
+    updated.splice(index, 1);
+    setSelectedSurgeryTokens(updated);
+    setSurgeryTokens([...surgeryTokens, word]);
+    setSurgeryVerified(null);
+  };
+
+  const handleVerifySurgeryPuzzle = () => {
+    if (!activeSurgeryMistake) return;
+    const built = selectedSurgeryTokens.join(' ').toLowerCase().trim();
+    const target = activeSurgeryMistake.correctedSentence.replace(/[.,?!]/g, '').toLowerCase().trim();
+
+    if (built === target) {
+      setSurgeryVerified(true);
+      soundService.playSuccess();
+      addXP(20, 'Corrected and rebuilt target structure!');
+      resolveMistake(activeSurgeryMistake.id);
+    } else {
+      setSurgeryVerified(false);
+      soundService.playError();
+    }
+  };
+
+  const handleToggleSurgerySpeech = () => {
+    if (!activeSurgeryMistake) return;
+
+    if (isListeningSurgery) {
+      speechRecognitionService.stopListening();
+      setIsListeningSurgery(false);
+      return;
+    }
+
+    setSpokenSurgeryTranscript('');
+    setSurgerySpeechScore(null);
+
+    const started = speechRecognitionService.startListening(
+      (res) => {
+        setSpokenSurgeryTranscript(res.transcript);
+        if (res.isFinal) {
+          setIsListeningSurgery(false);
+          const targetClean = activeSurgeryMistake.correctedSentence.toLowerCase().replace(/[^a-z0-9 ]/g, '');
+          const spokenClean = res.transcript.toLowerCase().replace(/[^a-z0-9 ]/g, '');
+          const targetWords = targetClean.split(' ');
+          const spokenWords = spokenClean.split(' ');
+          const matched = targetWords.filter((w) => spokenWords.includes(w)).length;
+          const score = Math.round((matched / Math.max(targetWords.length, 1)) * 100);
+          setSurgerySpeechScore(score);
+          if (score >= 70) {
+            soundService.playSuccess();
+            addXP(25, 'Spoke corrected sentence clearly');
+            recordSpeakingPractice(1);
+            resolveMistake(activeSurgeryMistake.id);
+          } else {
+            soundService.playError();
+          }
+        }
+      },
+      (err) => {
+        console.warn(err);
+        setIsListeningSurgery(false);
+      },
+      () => {
+        setIsListeningSurgery(false);
+      }
+    );
+
+    if (started) {
+      setIsListeningSurgery(true);
+    }
+  };
 
   const handleStartPractice = async () => {
     setIsGeneratingPractice(true);
@@ -101,7 +268,6 @@ export const MyMistakesView: React.FC = () => {
       setSelectedOption(null);
       setIsAnswerSubmitted(false);
     } else {
-      // Finished practice
       soundService.playFanfare();
       addXP(30, 'Completed Mistakes Practice Session!');
     }
@@ -136,19 +302,28 @@ export const MyMistakesView: React.FC = () => {
               <div className="p-2.5 bg-rose-50 dark:bg-rose-950/60 rounded-2xl text-rose-600 dark:text-rose-400 border border-rose-100 dark:border-rose-900/60">
                 <BookOpen className="w-6 h-6" />
               </div>
-              <h1 className="text-2xl font-bold text-slate-900 dark:text-white">My Mistakes Book</h1>
+              <h1 className="text-2xl font-bold text-slate-900 dark:text-white">Mistake-to-Mastery Memory</h1>
             </div>
             <p className="text-sm text-slate-600 dark:text-slate-400 max-w-xl">
-              "Errors are the stepping stones to fluency." Every corrected mistake from your tutor chats,
-              quizzes, and sentence construction is recorded here for targeted review.
+              "Errors are the blueprint of fluency." Every sentence you correct or mispronounce is saved here so you can actively rebuild, speak, and master it forever.
             </p>
           </div>
 
           <div className="flex flex-wrap items-center gap-3">
+            {mistakes.length === 0 && (
+              <button
+                onClick={handleSeedCommonMistakes}
+                className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-semibold bg-amber-500 hover:bg-amber-600 text-slate-950 shadow-xs transition-colors cursor-pointer"
+              >
+                <Sparkles className="w-4 h-4" />
+                Load 6 Common Pitfalls
+              </button>
+            )}
+
             <button
               id="add-mistake-manual-btn"
               onClick={() => setShowAddModal(true)}
-              className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-semibold border border-slate-200 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-200 transition-colors"
+              className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-semibold border border-slate-200 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-200 transition-colors cursor-pointer"
             >
               <Plus className="w-4 h-4" />
               Add Mistake
@@ -158,7 +333,7 @@ export const MyMistakesView: React.FC = () => {
               id="start-practice-mistakes-btn"
               onClick={handleStartPractice}
               disabled={isGeneratingPractice || unmasteredCount === 0}
-              className="flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-semibold bg-indigo-600 hover:bg-indigo-700 text-white shadow-xs disabled:opacity-50 transition-colors"
+              className="flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-semibold bg-indigo-600 hover:bg-indigo-700 text-white shadow-xs disabled:opacity-50 transition-colors cursor-pointer"
             >
               {isGeneratingPractice ? (
                 <>
@@ -168,7 +343,7 @@ export const MyMistakesView: React.FC = () => {
               ) : (
                 <>
                   <Play className="w-4 h-4" />
-                  Practice My Mistakes ({unmasteredCount})
+                  Practice Needs Review ({unmasteredCount})
                 </>
               )}
             </button>
@@ -200,6 +375,162 @@ export const MyMistakesView: React.FC = () => {
         </div>
       </div>
 
+      {/* Mistake Recovery Surgery Modal */}
+      <AnimatePresence>
+        {activeSurgeryMistake && (
+          <motion.div
+            initial={{ opacity: 0, scale: 0.98 }}
+            animate={{ opacity: 1, scale: 1 }}
+            exit={{ opacity: 0, scale: 0.98 }}
+            className="bg-gradient-to-br from-indigo-950 via-slate-900 to-indigo-900 text-white rounded-3xl p-6 sm:p-8 shadow-2xl border border-indigo-700 space-y-6"
+          >
+            <div className="flex items-center justify-between pb-4 border-b border-indigo-800">
+              <div className="flex items-center gap-3">
+                <span className="p-2.5 bg-indigo-800 rounded-2xl">
+                  <Zap className="w-5 h-5 text-amber-300" />
+                </span>
+                <div>
+                  <h3 className="text-lg font-bold">Mistake Recovery & Speaking Surgery</h3>
+                  <p className="text-xs text-indigo-300">Category: {activeSurgeryMistake.category}</p>
+                </div>
+              </div>
+
+              <button
+                onClick={() => setActiveSurgeryMistake(null)}
+                className="text-xs px-3 py-1.5 bg-indigo-900 hover:bg-indigo-800 rounded-xl text-indigo-200 cursor-pointer"
+              >
+                Close Surgery
+              </button>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              {/* Left Column: Diagnostics */}
+              <div className="space-y-4">
+                <div className="p-4 bg-rose-950/60 border border-rose-800/80 rounded-2xl">
+                  <span className="text-[10px] font-extrabold uppercase tracking-wider text-rose-400 block mb-1">
+                    ❌ Problematic Phrasing
+                  </span>
+                  <p className="line-through text-slate-300 font-medium text-sm">
+                    "{activeSurgeryMistake.originalSentence}"
+                  </p>
+                </div>
+
+                <div className="p-4 bg-emerald-950/60 border border-emerald-800/80 rounded-2xl">
+                  <div className="flex items-center justify-between mb-1">
+                    <span className="text-[10px] font-extrabold uppercase tracking-wider text-emerald-400">
+                      ✅ Target Natural English
+                    </span>
+                    <button
+                      onClick={() => soundService.speak(activeSurgeryMistake.correctedSentence)}
+                      className="p-1 text-emerald-300 hover:text-white cursor-pointer"
+                    >
+                      <Volume2 className="w-4 h-4" />
+                    </button>
+                  </div>
+                  <p className="text-emerald-200 font-bold text-base">
+                    "{activeSurgeryMistake.correctedSentence}"
+                  </p>
+                </div>
+
+                <div className="p-4 bg-indigo-950/80 border border-indigo-800 rounded-2xl text-xs text-indigo-200 space-y-1">
+                  <span className="font-bold text-amber-300 flex items-center gap-1.5">
+                    <Lightbulb className="w-4 h-4" /> Why this happens:
+                  </span>
+                  <p className="leading-relaxed">{activeSurgeryMistake.explanation}</p>
+                </div>
+              </div>
+
+              {/* Right Column: Active Word Assembly & Voice Check */}
+              <div className="space-y-4 bg-slate-900/90 p-5 rounded-2xl border border-indigo-800/80 flex flex-col justify-between">
+                <div className="space-y-3">
+                  <span className="text-xs font-bold text-indigo-300 uppercase tracking-wider">
+                    Task 1: Assemble correct sentence structure:
+                  </span>
+
+                  {/* Selected Slots */}
+                  <div className="min-h-[48px] p-2.5 bg-slate-950 border border-indigo-700 rounded-xl flex flex-wrap gap-1.5 items-center">
+                    {selectedSurgeryTokens.length === 0 ? (
+                      <span className="text-xs text-indigo-400 italic">Click words below in sequence...</span>
+                    ) : (
+                      selectedSurgeryTokens.map((w, idx) => (
+                        <button
+                          key={idx}
+                          onClick={() => handleDeselectSurgeryToken(w, idx)}
+                          className="px-2.5 py-1 bg-indigo-600 text-white rounded-lg text-xs font-bold hover:bg-indigo-700 cursor-pointer"
+                        >
+                          {w}
+                        </button>
+                      ))
+                    )}
+                  </div>
+
+                  {/* Token Options */}
+                  <div className="flex flex-wrap gap-1.5">
+                    {surgeryTokens.map((w, idx) => (
+                      <button
+                        key={idx}
+                        onClick={() => handleSelectSurgeryToken(w, idx)}
+                        className="px-2.5 py-1 bg-indigo-800 hover:bg-indigo-700 border border-indigo-600 text-white rounded-lg text-xs font-medium cursor-pointer"
+                      >
+                        {w}
+                      </button>
+                    ))}
+                  </div>
+
+                  <div className="flex items-center justify-between pt-1">
+                    <button
+                      onClick={handleVerifySurgeryPuzzle}
+                      disabled={selectedSurgeryTokens.length === 0}
+                      className="px-4 py-2 bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold text-xs rounded-xl shadow-xs cursor-pointer flex items-center gap-1.5"
+                    >
+                      <Check className="w-3.5 h-3.5" /> Check Assembly
+                    </button>
+                  </div>
+
+                  {surgeryVerified !== null && (
+                    <div className={`p-2.5 rounded-xl text-xs font-semibold ${
+                      surgeryVerified ? 'bg-emerald-950 text-emerald-300 border border-emerald-700' : 'bg-rose-950 text-rose-300 border border-rose-700'
+                    }`}>
+                      {surgeryVerified ? '✅ Structure Verified!' : '❌ Keep trying to adjust word order.'}
+                    </div>
+                  )}
+                </div>
+
+                {/* Voice Pronunciation Check */}
+                <div className="pt-3 border-t border-indigo-800/80 space-y-2">
+                  <span className="text-xs font-bold text-indigo-300 uppercase tracking-wider block">
+                    Task 2: Speak corrected sentence:
+                  </span>
+                  <div className="flex items-center gap-3">
+                    <button
+                      onClick={handleToggleSurgerySpeech}
+                      className={`px-4 py-2 rounded-xl text-xs font-bold flex items-center gap-2 cursor-pointer transition-colors ${
+                        isListeningSurgery
+                          ? 'bg-rose-600 animate-pulse text-white'
+                          : 'bg-indigo-600 hover:bg-indigo-500 text-white'
+                      }`}
+                    >
+                      {isListeningSurgery ? <MicOff className="w-4 h-4" /> : <Mic className="w-4 h-4" />}
+                      <span>{isListeningSurgery ? 'Listening...' : 'Voice Test'}</span>
+                    </button>
+
+                    {surgerySpeechScore !== null && (
+                      <span className={`text-xs font-bold ${surgerySpeechScore >= 70 ? 'text-emerald-400' : 'text-amber-400'}`}>
+                        Accuracy: {surgerySpeechScore}%
+                      </span>
+                    )}
+                  </div>
+
+                  {spokenSurgeryTranscript && (
+                    <p className="text-[11px] text-indigo-300 italic">Heard: "{spokenSurgeryTranscript}"</p>
+                  )}
+                </div>
+              </div>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
       {/* Practice Interactive Modal/Section */}
       <AnimatePresence>
         {isPracticing && practiceData && (
@@ -225,7 +556,7 @@ export const MyMistakesView: React.FC = () => {
 
               <button
                 onClick={() => setIsPracticing(false)}
-                className="text-xs px-3 py-1.5 bg-indigo-800 hover:bg-indigo-700 rounded-lg text-indigo-200 transition-colors"
+                className="text-xs px-3 py-1.5 bg-indigo-800 hover:bg-indigo-700 rounded-lg text-indigo-200 transition-colors cursor-pointer"
               >
                 Exit Practice
               </button>
@@ -268,7 +599,7 @@ export const MyMistakesView: React.FC = () => {
                         key={i}
                         onClick={() => handleAnswerSubmit(i)}
                         disabled={isAnswerSubmitted}
-                        className={`w-full text-left p-4 rounded-xl border font-medium text-sm transition-all flex items-center justify-between ${btnClass}`}
+                        className={`w-full text-left p-4 rounded-xl border font-medium text-sm transition-all flex items-center justify-between cursor-pointer ${btnClass}`}
                       >
                         <span>{opt}</span>
                         {isAnswerSubmitted && isCorrect && <CheckCircle2 className="w-5 h-5 text-white" />}
@@ -289,7 +620,7 @@ export const MyMistakesView: React.FC = () => {
                     <div className="flex justify-end">
                       <button
                         onClick={handleNextQuestion}
-                        className="flex items-center gap-2 px-5 py-2 bg-white text-indigo-900 font-bold rounded-xl text-sm hover:bg-indigo-50 transition-colors"
+                        className="flex items-center gap-2 px-5 py-2 bg-white text-indigo-900 font-bold rounded-xl text-sm hover:bg-indigo-50 transition-colors cursor-pointer"
                       >
                         {currentQIndex < practiceData.questions.length - 1 ? 'Next Challenge' : 'Complete Review'}
                         <ArrowRight className="w-4 h-4" />
@@ -309,7 +640,7 @@ export const MyMistakesView: React.FC = () => {
                 </p>
                 <button
                   onClick={() => setIsPracticing(false)}
-                  className="px-6 py-2.5 bg-white text-indigo-900 font-bold rounded-xl text-sm hover:bg-indigo-50"
+                  className="px-6 py-2.5 bg-white text-indigo-900 font-bold rounded-xl text-sm hover:bg-indigo-50 cursor-pointer"
                 >
                   Return to Mistakes Book
                 </button>
@@ -326,7 +657,7 @@ export const MyMistakesView: React.FC = () => {
             <button
               key={cat}
               onClick={() => setActiveCategory(cat)}
-              className={`text-xs px-3 py-1.5 rounded-full font-medium transition-colors ${
+              className={`text-xs px-3 py-1.5 rounded-full font-medium transition-colors cursor-pointer ${
                 activeCategory === cat
                   ? 'bg-indigo-600 text-white'
                   : 'bg-white dark:bg-slate-900 text-slate-600 dark:text-slate-400 border border-slate-200 dark:border-slate-800 hover:border-slate-300'
@@ -340,7 +671,7 @@ export const MyMistakesView: React.FC = () => {
         <div className="flex items-center gap-1 bg-slate-100 dark:bg-slate-800 p-1 rounded-xl text-xs">
           <button
             onClick={() => setFilterMastered('all')}
-            className={`px-3 py-1 rounded-lg font-medium transition-colors ${
+            className={`px-3 py-1 rounded-lg font-medium transition-colors cursor-pointer ${
               filterMastered === 'all' ? 'bg-white dark:bg-slate-900 text-slate-900 dark:text-white shadow-2xs' : 'text-slate-600 dark:text-slate-400'
             }`}
           >
@@ -348,7 +679,7 @@ export const MyMistakesView: React.FC = () => {
           </button>
           <button
             onClick={() => setFilterMastered('unmastered')}
-            className={`px-3 py-1 rounded-lg font-medium transition-colors ${
+            className={`px-3 py-1 rounded-lg font-medium transition-colors cursor-pointer ${
               filterMastered === 'unmastered' ? 'bg-white dark:bg-slate-900 text-rose-600 dark:text-rose-400 shadow-2xs' : 'text-slate-600 dark:text-slate-400'
             }`}
           >
@@ -356,7 +687,7 @@ export const MyMistakesView: React.FC = () => {
           </button>
           <button
             onClick={() => setFilterMastered('mastered')}
-            className={`px-3 py-1 rounded-lg font-medium transition-colors ${
+            className={`px-3 py-1 rounded-lg font-medium transition-colors cursor-pointer ${
               filterMastered === 'mastered' ? 'bg-white dark:bg-slate-900 text-emerald-600 dark:text-emerald-400 shadow-2xs' : 'text-slate-600 dark:text-slate-400'
             }`}
           >
@@ -371,7 +702,7 @@ export const MyMistakesView: React.FC = () => {
           <div
             key={item.id}
             id={`mistake-card-${item.id}`}
-            className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-5 shadow-2xs flex flex-col justify-between space-y-4 hover:border-slate-300 dark:hover:border-slate-700 transition-all"
+            className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl p-5 shadow-xs flex flex-col justify-between space-y-4 hover:border-slate-300 dark:hover:border-slate-700 transition-all"
           >
             <div className="space-y-3">
               <div className="flex items-center justify-between">
@@ -395,7 +726,7 @@ export const MyMistakesView: React.FC = () => {
 
               {/* Wrong vs Right */}
               <div className="space-y-2 text-sm">
-                <div className="p-3 bg-rose-50/70 dark:bg-rose-950/30 border border-rose-100 dark:border-rose-900/50 rounded-xl">
+                <div className="p-3 bg-rose-50/70 dark:bg-rose-950/30 border border-rose-100 dark:border-rose-900/50 rounded-2xl">
                   <span className="text-xs font-semibold text-rose-600 dark:text-rose-400 block mb-1">
                     ❌ Avoid saying:
                   </span>
@@ -404,14 +735,14 @@ export const MyMistakesView: React.FC = () => {
                   </p>
                 </div>
 
-                <div className="p-3 bg-emerald-50/70 dark:bg-emerald-950/30 border border-emerald-100 dark:border-emerald-900/50 rounded-xl">
+                <div className="p-3 bg-emerald-50/70 dark:bg-emerald-950/30 border border-emerald-100 dark:border-emerald-900/50 rounded-2xl">
                   <div className="flex items-center justify-between">
                     <span className="text-xs font-semibold text-emerald-700 dark:text-emerald-300 block mb-1">
                       ✅ Say this instead:
                     </span>
                     <button
                       onClick={() => soundService.speak(item.correctedSentence)}
-                      className="text-emerald-700 dark:text-emerald-300 hover:text-emerald-900 p-1"
+                      className="text-emerald-700 dark:text-emerald-300 hover:text-emerald-900 p-1 cursor-pointer"
                       title="Listen correct pronunciation"
                     >
                       <Volume2 className="w-4 h-4" />
@@ -424,34 +755,65 @@ export const MyMistakesView: React.FC = () => {
               </div>
 
               {/* Explanation */}
-              <p className="text-xs text-slate-600 dark:text-slate-400 leading-relaxed italic bg-slate-50 dark:bg-slate-800/50 p-2.5 rounded-lg">
+              <p className="text-xs text-slate-600 dark:text-slate-400 leading-relaxed italic bg-slate-50 dark:bg-slate-800/50 p-2.5 rounded-xl">
                 💡 {item.explanation}
               </p>
             </div>
 
-            <div className="pt-2 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between">
-              <span className="text-[11px] text-slate-400">
-                Practiced {item.practiceCount} times
-              </span>
+            <div className="pt-3 border-t border-slate-100 dark:border-slate-800 flex flex-wrap items-center justify-between gap-2">
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={() => handleStartSurgery(item)}
+                  className="flex items-center gap-1.5 text-xs font-bold text-indigo-600 dark:text-indigo-400 hover:bg-indigo-50 dark:hover:bg-indigo-950/60 px-3 py-1.5 rounded-xl border border-indigo-200 dark:border-indigo-800/80 transition-colors cursor-pointer"
+                >
+                  <Zap className="w-3.5 h-3.5 text-amber-500" />
+                  <span>Rebuild & Speak</span>
+                </button>
 
-              {!item.mastered && (
+                <button
+                  onClick={() => {
+                    const firstWord = item.correctedSentence.split(' ')[0] || item.category;
+                    setSentenceLoopTarget(item.category === 'Collocations' || item.category === 'Past tense' ? item.correctedSentence : firstWord);
+                    setSentenceLoopOpen(true);
+                  }}
+                  className="flex items-center gap-1.5 text-xs font-bold text-purple-600 dark:text-purple-400 hover:bg-purple-50 dark:hover:bg-purple-950/60 px-3 py-1.5 rounded-xl border border-purple-200 dark:border-purple-800/80 transition-colors cursor-pointer"
+                  title="Master through full 10-stage learning pipeline"
+                >
+                  <RotateCcw className="w-3.5 h-3.5" />
+                  <span>10-Step Loop</span>
+                </button>
+              </div>
+
+              {!item.mastered ? (
                 <button
                   onClick={() => resolveMistake(item.id)}
-                  className="flex items-center gap-1.5 text-xs font-semibold text-indigo-600 dark:text-indigo-400 hover:bg-indigo-50 dark:hover:bg-indigo-950/60 px-3 py-1.5 rounded-lg transition-colors"
+                  className="flex items-center gap-1.5 text-xs font-semibold text-slate-600 dark:text-slate-300 hover:text-emerald-600 px-3 py-1.5 rounded-xl transition-colors cursor-pointer"
                 >
                   <Check className="w-3.5 h-3.5" />
-                  Mark as Mastered
+                  Mark Mastered
                 </button>
+              ) : (
+                <span className="text-[11px] text-emerald-600 dark:text-emerald-400 font-bold">
+                  ✓ Mastered
+                </span>
               )}
             </div>
           </div>
         ))}
 
         {filteredMistakes.length === 0 && (
-          <div className="col-span-full py-12 text-center text-slate-400 bg-white dark:bg-slate-900 rounded-3xl border border-slate-200 dark:border-slate-800">
-            <CheckCircle2 className="w-12 h-12 text-emerald-500 mx-auto mb-2 opacity-80" />
-            <p className="text-base font-semibold text-slate-700 dark:text-slate-300">No mistakes found in this filter!</p>
-            <p className="text-xs text-slate-500 mt-1">Keep practicing conversations and lessons to identify areas for growth.</p>
+          <div className="col-span-full py-12 text-center text-slate-400 bg-white dark:bg-slate-900 rounded-3xl border border-slate-200 dark:border-slate-800 space-y-3">
+            <CheckCircle2 className="w-12 h-12 text-emerald-500 mx-auto opacity-80" />
+            <div>
+              <p className="text-base font-semibold text-slate-700 dark:text-slate-300">No mistakes logged in this view!</p>
+              <p className="text-xs text-slate-500 mt-1">Start practicing conversations, or load the 6 Core English Pitfalls above to practice right away.</p>
+            </div>
+            <button
+              onClick={handleSeedCommonMistakes}
+              className="px-4 py-2 bg-indigo-600 text-white font-bold text-xs rounded-xl shadow-xs hover:bg-indigo-700 transition-colors cursor-pointer"
+            >
+              Load 6 Common Pitfalls
+            </button>
           </div>
         )}
       </div>
@@ -530,13 +892,13 @@ export const MyMistakesView: React.FC = () => {
                 <button
                   type="button"
                   onClick={() => setShowAddModal(false)}
-                  className="px-4 py-2 text-sm text-slate-600 dark:text-slate-400"
+                  className="px-4 py-2 text-sm text-slate-600 dark:text-slate-400 cursor-pointer"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
-                  className="px-5 py-2 text-sm font-semibold bg-indigo-600 text-white rounded-xl hover:bg-indigo-700"
+                  className="px-5 py-2 text-sm font-semibold bg-indigo-600 text-white rounded-xl hover:bg-indigo-700 cursor-pointer"
                 >
                   Save to Book
                 </button>
@@ -545,6 +907,16 @@ export const MyMistakesView: React.FC = () => {
           </motion.div>
         </div>
       )}
+
+      {/* 10-Step Complete Sentence Learning Loop Modal */}
+      <SentenceLearningLoopModal
+        isOpen={sentenceLoopOpen}
+        onClose={() => setSentenceLoopOpen(false)}
+        initialTopicOrWord={sentenceLoopTarget}
+        sourceContext="MyMistakes"
+      />
     </div>
   );
 };
+
+export default MyMistakesView;
